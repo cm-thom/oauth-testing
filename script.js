@@ -1,7 +1,7 @@
 authBtnEl = document.getElementById('auth-btn');
 
 const clientId = 'ca2ce6aeb1fa483bb8544ccdc4ece44c';
-const redirectUri = 'https://localhost:8080';
+const redirectUri = 'https://cm-thom.github.io/oauth-testing/';
 
 authBtnEl.addEventListener('click', function() {
 
