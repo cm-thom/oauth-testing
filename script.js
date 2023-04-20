@@ -1,7 +1,14 @@
 authBtnEl = document.getElementById('auth-btn');
+refreshBtnEl = document.getElementById('refresh-token-btn');
+
 
 const clientId = 'ca2ce6aeb1fa483bb8544ccdc4ece44c';
-const redirectUri = 'https://cm-thom.github.io/oauth-testing/';
+const redirectUri = 'http://localhost:5500/';
+
+refreshBtnEl.addEventListener('click', function() {
+  console.log('refresh token btn!');
+  refreshAccessToken();
+})
 
 authBtnEl.addEventListener('click', function() {
 
@@ -56,39 +63,96 @@ function generateRandomString(length) {
   }
 
   
-
-const urlParams = new URLSearchParams(window.location.search);
-let code = urlParams.get('code');
-
-
-let codeVerifier = localStorage.getItem('code_verifier');
-
-let body = new URLSearchParams({
-  grant_type: 'authorization_code',
-  code: code,
-  redirect_uri: redirectUri,
-  client_id: clientId,
-  code_verifier: codeVerifier
-});
+function getAccessToken() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let code = urlParams.get('code');
 
 
-const response = fetch('https://accounts.spotify.com/api/token', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  },
-  body: body
-})
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('HTTP status ' + response.status);
-    }
-    return response.json();
-  })
-  .then(data => {
-    localStorage.setItem('access_token', data.access_token);
-  })
-  .catch(error => {
-    console.error('Error:', error);
+  let codeVerifier = localStorage.getItem('code_verifier');
+
+  let body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: code,
+    redirect_uri: redirectUri,
+    client_id: clientId,
+    code_verifier: codeVerifier
   });
 
+
+  const response = fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('HTTP status ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      localStorage.setItem('access_token', data.access_token);
+      console.log(data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+};
+
+  function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      // There is no refresh token, so the user needs to log in again
+      return;
+    }
+  
+    const body = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: clientId
+    });
+  
+    fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP status ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('expires_at', Date.now() + (data.expires_in * 1000));
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
+
+
+// const accessToken = localStorage.getItem('access_token');
+
+// fetch('https://api.spotify.com/v1/me', {
+//   headers: {
+//     'Authorization': 'Bearer ' + accessToken
+//   }
+// })
+//   .then(response => {
+//     if (!response.ok) {
+//       throw new Error('HTTP status ' + response.status);
+//     }
+//     return response.json();
+//   })
+//   .then(data => {
+//     console.log(data);
+//   })
+//   .catch(error => {
+//     console.error('Error:', error);
+//   });
